@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>아라 · 빙의 세션</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600&family=Cinzel:wght@400;600&family=Noto+Sans+KR:wght@300;400;500&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1510;
+    --paper: #f5f0e8;
+    --paper2: #ede8dc;
+    --gold: #b8963e;
+    --gold-light: #d4b06a;
+    --red: #8b2635;
+    --muted: #7a6e60;
+    --border: #c8b99a;
+    --shadow: rgba(26,21,16,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--ink);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 배경 텍스처 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(184,150,62,0.03) 40px, rgba(184,150,62,0.03) 41px),
+      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(184,150,62,0.03) 40px, rgba(184,150,62,0.03) 41px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    background: var(--ink);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(184,150,62,0.3);
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+  }
+
+  .logo span {
+    color: rgba(184,150,62,0.4);
+    font-size: 11px;
+    display: block;
+    letter-spacing: 3px;
+    margin-top: 2px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 7px 16px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    border: none;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid rgba(184,150,62,0.4);
+  }
+  .btn-ghost:hover { border-color: var(--gold); background: rgba(184,150,62,0.08); }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: var(--gold-light); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid rgba(139,38,53,0.4);
+    font-size: 11px;
+  }
+  .btn-danger:hover { background: rgba(139,38,53,0.1); border-color: var(--red); }
+
+  /* 메인 레이아웃 */
+  .app {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 61px);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 사이드바 */
+  .sidebar {
+    width: 280px;
+    background: #110e09;
+    border-right: 1px solid rgba(184,150,62,0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sidebar-section {
+    border-bottom: 1px solid rgba(184,150,62,0.15);
+    padding: 16px;
+  }
+
+  .sidebar-section:last-child { border-bottom: none; flex: 1; overflow-y: auto; }
+
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    color: #c8a855;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* API 키 */
+  .api-input-wrap { position: relative; }
+  .api-input-wrap input {
+    width: 100%;
+    background: rgba(184,150,62,0.08);
+    border: 1px solid rgba(184,150,62,0.3);
+    border-radius: 4px;
+    padding: 10px 36px 10px 12px;
+    color: #e8d5a0;
+    font-size: 13px;
+    font-family: monospace;
+    outline: none;
+  }
+  .api-input-wrap input:focus { border-color: var(--gold); background: rgba(184,150,62,0.12); }
+  .api-input-wrap input::placeholder { color: rgba(184,150,62,0.4); font-size: 12px; }
+  .toggle-key {
+    position: absolute;
+    right: 8px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: rgba(184,150,62,0.7);
+    cursor: pointer; font-size: 16px;
+    padding: 6px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .toggle-key:hover { color: var(--gold); }
+
+  .model-select {
+    width: 100%;
+    background: rgba(184,150,62,0.08);
+    border: 1px solid rgba(184,150,62,0.3);
+    border-radius: 4px;
+    padding: 9px 10px;
+    color: #e8d5a0;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .model-select option { background: #1a1510; color: #e8d5a0; }
+
+  /* 캐릭터카드 목록 */
+  .char-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+
+  .char-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    border: 1px solid rgba(184,150,62,0.15);
+    transition: all 0.2s;
+    background: rgba(184,150,62,0.04);
+  }
+  .char-item:hover { background: rgba(184,150,62,0.1); border-color: rgba(184,150,62,0.35); }
+  .char-item.active { background: rgba(184,150,62,0.18); border-color: var(--gold); }
+
+  .char-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--red));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--ink); font-weight: 600;
+    flex-shrink: 0;
+    font-family: 'Cinzel', serif;
+  }
+
+  .char-name { color: #e8e0d0; font-size: 13px; font-weight: 500; flex: 1; }
+  .char-delete { background: none; border: none; color: rgba(184,150,62,0.5); cursor: pointer; font-size: 16px; padding: 4px 6px; }
+  .char-delete:hover { color: var(--red); }
+
+  .add-char-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px dashed rgba(184,150,62,0.25);
+    border-radius: 2px;
+    color: rgba(184,150,62,0.5);
+    font-size: 12px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .add-char-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* 메인 영역 */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    overflow: hidden;
+  }
+
+  /* 탭 */
+  .tabs {
+    display: flex;
+    background: var(--paper2);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 12px 24px;
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); font-weight: 600; }
+
+  /* 탭 콘텐츠 */
+  .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+  .tab-content.active { display: flex; }
+
+  /* 설정 탭 */
+  .settings-panel {
+    padding: 28px 32px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .field-group { margin-bottom: 24px; }
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  textarea, .text-input {
+    width: 100%;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 14px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    line-height: 1.7;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+  textarea:focus, .text-input:focus { border-color: var(--gold); }
+  textarea::placeholder, .text-input::placeholder { color: #bbb; }
+
+  .char-card-form {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px;
+  }
+
+  .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+  .form-row .field-group { flex: 1; margin-bottom: 0; }
+
+  /* 채팅 탭 */
+  .chat-header {
+    padding: 14px 24px;
+    background: var(--paper2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .chat-char-name {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .chat-char-name span { font-size: 11px; color: var(--muted); font-family: 'Noto Sans KR', sans-serif; font-weight: 300; margin-left: 10px; }
+
+  .chat-actions { display: flex; gap: 8px; }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .message {
+    display: flex;
+    gap: 14px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    flex-shrink: 0;
+    font-family: 'Cinzel', serif;
+  }
+
+  .message.user .msg-avatar {
+    background: var(--ink);
+    color: var(--gold);
+  }
+  .message.assistant .msg-avatar {
+    background: linear-gradient(135deg, var(--gold), var(--red));
+    color: var(--ink);
+  }
+
+  .msg-bubble {
+    max-width: 75%;
+    padding: 16px 20px;
+    border-radius: 2px;
+    font-family: 'Gowun Dodum', 'Noto Serif KR', serif;
+    font-size: 15px;
+    line-height: 2.1;
+    color: var(--ink);
+    word-break: keep-all;
+    white-space: pre-wrap;
+  }
+
+  /* 행동지문 *별표* → 이탤릭 + 색상 */
+  .msg-bubble .action {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* 독백 [대괄호] → 색상 구분 */
+  .msg-bubble .thought {
+    color: #7a5c8a;
+    font-style: italic;
+    font-size: 14px;
+  }
+
+  /* 대사 "큰따옴표" → 약간 강조 */
+  .msg-bubble .speech {
+    color: #1a1510;
+    font-weight: 500;
+  }
+
+  .message.user .msg-bubble {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 2px 2px 2px 12px;
+  }
+  .message.assistant .msg-bubble {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 2px 2px 12px 2px;
+  }
+
+  .msg-time {
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0.6;
+    margin-top: 4px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .message.user .msg-time { text-align: right; }
+
+  .thinking {
+    display: flex;
+    gap: 5px;
+    padding: 16px 18px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 2px 2px 12px 2px;
+    width: fit-content;
+  }
+  .thinking span {
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: pulse 1.2s infinite;
+  }
+  .thinking span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  /* 입력 영역 */
+  .input-area {
+    padding: 16px 24px 20px;
+    background: var(--paper2);
+    border-top: 1px solid var(--border);
+  }
+
+  .input-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    resize: none;
+    line-height: 1.6;
+    max-height: 120px;
+    overflow-y: auto;
+    transition: border-color 0.2s;
+  }
+  .chat-input:focus { border-color: var(--gold); }
+  .chat-input::placeholder { color: #bbb; }
+
+  .auto-btn {
+    background: transparent;
+    border: 1px solid rgba(184,150,62,0.5);
+    border-radius: 4px;
+    width: 44px; height: 44px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    color: var(--gold);
+    font-size: 16px;
+  }
+  .auto-btn:hover { background: rgba(184,150,62,0.12); border-color: var(--gold); }
+  .auto-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .send-btn {
+    background: var(--gold);
+    border: none;
+    border-radius: 4px;
+    width: 44px; height: 44px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: var(--gold-light); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .send-btn svg { width: 18px; height: 18px; fill: var(--ink); }
+
+  /* 요약 탭 */
+  .summary-panel {
+    padding: 28px 32px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .summary-box {
+    width: 100%;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px 24px;
+    font-family: 'Gowun Dodum', 'Noto Serif KR', serif;
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--ink);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .summary-box:focus { border-color: var(--gold); }
+
+  .summary-placeholder {
+    color: #bbb;
+    font-style: italic;
+    font-size: 13px;
+  }
+
+  /* 모달 */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,8,5,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 28px 32px;
+    width: 500px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    color: var(--ink);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* 토스트 */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--ink);
+    color: var(--gold);
+    padding: 10px 20px;
+    border-radius: 2px;
+    font-size: 12px;
+    border: 1px solid rgba(184,150,62,0.3);
+    z-index: 200;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    text-align: center;
+    padding: 40px;
+    gap: 12px;
+  }
+  .empty-state .empty-icon { font-size: 40px; opacity: 0.3; }
+  .empty-state p { font-size: 13px; line-height: 1.7; }
+
+  /* 스크롤바 */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(184,150,62,0.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(184,150,62,0.5); }
+
+  .token-counter {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  /* ========== 모바일 반응형 ========== */
+  @media (max-width: 768px) {
+
+    /* 헤더 */
+    header { padding: 12px 16px; }
+    .logo { font-size: 16px; letter-spacing: 3px; }
+    .logo span { font-size: 9px; }
+    .header-actions { gap: 6px; }
+    .btn { font-size: 11px; padding: 6px 10px; }
+
+    /* 레이아웃 — 사이드바 숨기고 하단 탭바로 */
+    .app { flex-direction: column; height: calc(100vh - 49px); }
+
+    .sidebar { display: none; }
+    .sidebar.mobile-open {
+      display: flex;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 50;
+      width: 100%;
+      background: #110e09;
+    }
+
+    .main {
+      flex: 1;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* 상단 탭 숨기고 하단 탭바로 */
+    .tabs { display: none; }
+
+    .mobile-tabbar {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--ink);
+      border-top: 1px solid rgba(184,150,62,0.25);
+      z-index: 40;
+      height: 56px;
+    }
+
+    .mobile-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: rgba(184,150,62,0.4);
+      font-size: 9px;
+      cursor: pointer;
+      transition: color 0.2s;
+      letter-spacing: 0.5px;
+      border: none;
+      background: none;
+      font-family: 'Noto Sans KR', sans-serif;
+      padding: 8px 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-tab .tab-icon { font-size: 18px; }
+    .mobile-tab.active { color: var(--gold); }
+    .mobile-tab.active .tab-icon { transform: scale(1.1); }
+
+    /* 탭 콘텐츠 — 하단 탭바 여백 */
+    .tab-content { padding-bottom: 56px; }
+
+    /* 채팅 영역 */
+    .chat-header { padding: 10px 14px; }
+    .chat-char-name { font-size: 13px; }
+
+    .messages {
+      padding: 16px 12px;
+      gap: 14px;
+    }
+
+    .msg-bubble {
+      max-width: 90%;
+      font-size: 14px;
+      line-height: 2.0;
+      padding: 12px 14px;
+    }
+
+    .msg-avatar {
+      width: 28px; height: 28px;
+      font-size: 11px;
+    }
+
+    /* 입력 영역 */
+    .input-area {
+      padding: 10px 12px 12px;
+    }
+
+    .chat-input {
+      font-size: 15px;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+
+    .send-btn, .auto-btn {
+      width: 48px; height: 48px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .auto-btn { font-size: 18px; }
+
+    /* 설정/요약 패널 */
+    .settings-panel, .summary-panel {
+      padding: 16px;
+    }
+
+    /* 사이드바 메뉴 버튼 */
+    .sidebar-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 1px solid rgba(184,150,62,0.3);
+      color: var(--gold);
+      border-radius: 4px;
+      width: 32px; height: 32px;
+      cursor: pointer;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* 토스트 위치 — 하단 탭바 위로 */
+    .toast { bottom: 68px; right: 12px; left: 12px; text-align: center; }
+  }
+
+  /* PC에서는 하단 탭바 숨김 */
+  @media (min-width: 769px) {
+    .mobile-tabbar { display: none; }
+    .sidebar-toggle { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <button class="sidebar-toggle" onclick="toggleMobileSidebar()" title="캐릭터 메뉴">☰</button>
+    <div class="logo">
+      아라
+      <span>빙의 · 다크판타지 세션</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="exportSession()">내보내기</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">불러오기</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importSession(event)">
+    <button class="btn btn-danger" onclick="clearSession()">초기화</button>
+  </div>
+</header>
+
+<div class="app">
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="section-title">API 설정</div>
+      <div class="api-input-wrap">
+        <input type="password" id="apiKey" placeholder="Gemini API Key" oninput="saveSettings()">
+        <button class="toggle-key" onclick="toggleKey()">👁</button>
+      </div>
+      <select class="model-select" id="modelSelect" onchange="saveSettings()">
+        <option value="gemini-2.5-flash">Gemini 2.5 Flash (추천)</option>
+        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite (절약)</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section" style="flex:1; overflow-y:auto;">
+      <div class="section-title">캐릭터</div>
+      <div class="char-list" id="charList"></div>
+      <button class="add-char-btn" onclick="openAddChar()">＋ 캐릭터 추가</button>
+    </div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="main">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('chat')">대화</div>
+      <div class="tab" onclick="switchTab('settings')">세계관 · 설정</div>
+      <div class="tab" onclick="switchTab('summary')">요약</div>
+    </div>
+
+    <!-- 대화 탭 -->
+    <div class="tab-content active" id="tab-chat">
+      <div class="chat-header">
+        <div>
+          <span class="chat-char-name" id="currentCharName">아라의 이야기</span>
+          <span id="msgCount"></span>
+        </div>
+        <div class="chat-actions">
+          <button class="btn btn-ghost" onclick="generateSummary()" style="font-size:11px;">요약 생성</button>
+        </div>
+      </div>
+      <div class="messages" id="messages">
+        <div class="empty-state">
+          <div class="empty-icon">⚔</div>
+          <p>왼쪽에서 캐릭터를 선택하고<br>대화를 시작하세요.</p>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-wrap">
+          <textarea class="chat-input" id="chatInput" placeholder="아라의 행동이나 대사를 입력하세요. (예: 창가로 다가가 밖을 내다봤다.)" rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="auto-btn" id="autoBtn" onclick="autoAdvance()" title="AI 자동 진행">▶</button>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="전송">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+        <div class="token-counter" id="tokenCounter"></div>
+      </div>
+    </div>
+
+    <!-- 설정 탭 -->
+    <div class="tab-content" id="tab-settings">
+      <div class="settings-panel">
+        <div class="field-group">
+          <label class="field-label">세계관 · 배경 설정</label>
+          <textarea id="worldSetting" rows="8"
+            placeholder="이 세계의 배경, 시대, 규칙, 분위기 등을 자유롭게 서술하세요.&#10;&#10;예) 무림이 쇠퇴하고 기문(奇門)의 시대가 열린 땅. 각 세력은 고유한 술법 체계를 가지며..."
+            oninput="saveSettings()"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">공통 롤플레이 지침</label>
+          <textarea id="rpGuideline" rows="5"
+            placeholder="모든 캐릭터에게 적용할 롤플레이 규칙을 적으세요.&#10;&#10;예) 캐릭터는 1인칭 시점으로 답하며, 행동 묘사는 *별표*로 감쌉니다. 대사는 큰따옴표를 사용합니다."
+            oninput="saveSettings()"></textarea>
+        </div>
+        <div class="field-group" id="charEditSection" style="display:none;">
+          <label class="field-label" id="charEditLabel">캐릭터 카드 편집</label>
+          <div class="char-card-form">
+            <div class="form-row">
+              <div class="field-group">
+                <label class="field-label">이름</label>
+                <input type="text" class="text-input" id="editCharName" oninput="saveCharEdit()">
+              </div>
+              <div class="field-group">
+                <label class="field-label">약칭 (아바타)</label>
+                <input type="text" class="text-input" id="editCharInitial" maxlength="2" oninput="saveCharEdit()" style="width:80px;">
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">캐릭터 설명 · 성격 · 말투</label>
+              <textarea id="editCharDesc" rows="8" placeholder="캐릭터의 성격, 말투, 배경, 특징 등을 상세히 서술하세요." oninput="saveCharEdit()"></textarea>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings(); showToast('설정이 저장되었습니다.')">저장</button>
+      </div>
+    </div>
+
+    <!-- 요약 탭 -->
+    <div class="tab-content" id="tab-summary">
+      <div class="summary-panel">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <div>
+            <div class="field-label" style="margin-bottom:4px;">세션 요약</div>
+            <p style="font-size:11px; color:var(--muted);">직접 입력하거나 요약 생성 버튼을 누르세요. 다음 세션 시작 시 프롬프트에 자동 포함됩니다.</p>
+          </div>
+          <button class="btn btn-primary" onclick="generateSummary()">요약 생성</button>
+        </div>
+        <textarea class="summary-box" id="summaryBox" rows="20"
+          placeholder="여기에 이전 세션 요약을 직접 붙여넣거나 입력하세요."
+          oninput="saveSummaryEdit()"></textarea>
+        <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="copySummary()">복사</button>
+          <button class="btn btn-ghost" onclick="clearSummary()">초기화</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 캐릭터 추가 모달 -->
+<div class="modal-overlay" id="addCharModal">
+  <div class="modal">
+    <div class="modal-title">새 캐릭터 추가</div>
+    <div class="field-group">
+      <label class="field-label">이름</label>
+      <input type="text" class="text-input" id="newCharName" placeholder="비야, 후이지...">
+    </div>
+    <div class="field-group">
+      <label class="field-label">아바타 약칭 (1-2자)</label>
+      <input type="text" class="text-input" id="newCharInitial" placeholder="비" maxlength="2" style="width:80px;">
+    </div>
+    <div class="field-group">
+      <label class="field-label">캐릭터 설명</label>
+      <textarea id="newCharDesc" rows="6" placeholder="성격, 말투, 배경 등..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="addChar()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 모바일 하단 탭바 -->
+<nav class="mobile-tabbar">
+  <button class="mobile-tab active" id="mtab-chat" onclick="switchTab('chat')" >
+    <span class="tab-icon">✦</span>대화
+  </button>
+  <button class="mobile-tab" id="mtab-settings" onclick="switchTab('settings')">
+    <span class="tab-icon">⚙</span>설정
+  </button>
+  <button class="mobile-tab" id="mtab-summary" onclick="switchTab('summary')">
+    <span class="tab-icon">📜</span>요약
+  </button>
+  <button class="mobile-tab" id="mtab-sidebar" onclick="toggleMobileSidebar()">
+    <span class="tab-icon">👤</span>캐릭터
+  </button>
+</nav>
+
+<!-- 모바일 사이드바 오버레이 -->
+<div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:49;" onclick="toggleMobileSidebar()"></div>
+
+<script type="module">
+// ========== Firebase 초기화 ==========
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAcme_aVMyPbxFx0qRlDNhhIX5qL1nOMnI",
+  authDomain: "arrrra-58058.firebaseapp.com",
+  projectId: "arrrra-58058",
+  storageBucket: "arrrra-58058.firebasestorage.app",
+  messagingSenderId: "172786297050",
+  appId: "1:172786297050:web:48e88478e5070e2e025de3"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const SESSION_DOC = doc(db, 'sessions', 'ara-main');
+
+// Firestore에 저장
+window.saveToCloud = async function() {
+  try {
+    // sessions는 Firestore 크기 제한 때문에 JSON 문자열로 저장
+    await setDoc(SESSION_DOC, {
+      apiKey: state.apiKey,
+      model: state.model,
+      worldSetting: state.worldSetting,
+      rpGuideline: state.rpGuideline,
+      characters: JSON.stringify(state.characters),
+      sessions: JSON.stringify(state.sessions),
+      summaries: JSON.stringify(state.summaries),
+      updatedAt: new Date().toISOString(),
+    });
+  } catch(e) {
+    console.error('Cloud save error:', e);
+    showToast('클라우드 저장 실패');
+  }
+};
+
+// Firestore에서 불러오기
+window.loadFromCloud = async function() {
+  try {
+    const snap = await getDoc(SESSION_DOC);
+    if (!snap.exists()) return false;
+    const data = snap.data();
+    state.apiKey = data.apiKey || '';
+    state.model = data.model || 'gemini-2.5-flash';
+    state.worldSetting = data.worldSetting || '';
+    state.rpGuideline = data.rpGuideline || '';
+    state.characters = JSON.parse(data.characters || '[]');
+    state.sessions = JSON.parse(data.sessions || '{}');
+    state.summaries = JSON.parse(data.summaries || '{}');
+    return true;
+  } catch(e) {
+    console.error('Cloud load error:', e);
+    return false;
+  }
+};
+
+// 실시간 동기화 — 다른 기기에서 저장하면 자동 반영
+window.startSync = function() {
+  onSnapshot(SESSION_DOC, (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    // 내가 방금 저장한 것과 다를 때만 반영 (updatedAt 비교)
+    if (data.updatedAt === window._lastSaveTime) return;
+    state.apiKey = data.apiKey || '';
+    state.model = data.model || 'gemini-2.5-flash';
+    state.worldSetting = data.worldSetting || '';
+    state.rpGuideline = data.rpGuideline || '';
+    state.characters = JSON.parse(data.characters || '[]');
+    state.sessions = JSON.parse(data.sessions || '{}');
+    state.summaries = JSON.parse(data.summaries || '{}');
+    // UI 갱신
+    document.getElementById('apiKey').value = state.apiKey;
+    document.getElementById('modelSelect').value = state.model;
+    document.getElementById('worldSetting').value = state.worldSetting;
+    document.getElementById('rpGuideline').value = state.rpGuideline;
+    document.getElementById('summaryBox').value = state.summaries[window.NARRATOR_ID_REF] || '';
+    renderCharList();
+    renderMessages();
+    updateTokenCounter();
+    showToast('📱 다른 기기에서 동기화됨');
+  });
+};
+
+// 앱 초기화 후 클라우드 로드
+window.addEventListener('load', async () => {
+  showToast('클라우드에서 불러오는 중...');
+  const loaded = await loadFromCloud();
+  if (loaded) {
+    // localStorage도 같이 업데이트
+    localStorage.setItem('zeta_state', JSON.stringify(state));
+    // UI 갱신
+    document.getElementById('apiKey').value = state.apiKey;
+    document.getElementById('modelSelect').value = state.model || 'gemini-2.5-flash';
+    document.getElementById('worldSetting').value = state.worldSetting;
+    document.getElementById('rpGuideline').value = state.rpGuideline;
+    document.getElementById('summaryBox').value = state.summaries['session_narrator'] || '';
+    renderCharList();
+    renderMessages();
+    updateTokenCounter();
+    showToast('✅ 클라우드 동기화 완료');
+  } else {
+    showToast('새 세션 시작');
+  }
+  startSync();
+});
+</script>
+
+<script>
+// ========== 전역 참조 ==========
+window.NARRATOR_ID_REF = 'session_narrator';
+
+// ========== 상태 ==========
+let state = {
+  apiKey: '',
+  model: 'gemini-2.5-flash',
+  worldSetting: '',
+  rpGuideline: '',
+  characters: [],
+  sessions: {},
+  summaries: {},
+  activeCharId: null,
+};
+
+// ========== 기본 세계관 설정 ==========
+const DEFAULT_WORLD = `# ██ GM 전용 마스터 설정 ██
+# 이 문서의 모든 내용은 AI(GM)만 알고 있음
+# 캐릭터들은 자신의 [캐릭터 전용 정보] 섹션만 알고 있음
+
+---
+
+## ▶ 세계관 · 배경
+
+중세 유럽풍 제국. 황실을 정점으로 대공 > 공작 > 백작 순의 귀족 위계.
+남부는 아마란 공작가가 지배하는 무역 거점. 제국 유일의 철광산·구리광산 위치.
+현재 광산 채굴권은 아스타르 대공가:황실 = 4:6으로 분배 중.
+
+레드 문: 천년에 한 번 뜨는 붉은 달. 봉인된 신의 잔재가 깨어나는 주기.
+레드 문이 뜰 때 신의 제물로 바쳐지는 자에게 보라색 눈이 나타남.
+이 사실은 아마란 공작가의 오랜 비밀 — 황실도 알고 있을 가능성 높음.
+아마란 공작 부부는 딸에게 설명 없이 대공가로 시집보냄 (사실상 매각).
+
+---
+
+## ▶ 현재 시점 상황
+
+- 시간: 이른 아침, 일출 직후
+- 장소: 아스타르 대공 저택, 아라의 감금된 침실 (서쪽 별관 2층)
+- 카엘과 이자벨라는 현재 저택 남쪽 정원에 있음
+- 레나르는 저택에 방문 예정 (오늘 오후)
+- 에리카는 아라의 방 앞 복도에 대기 중
+
+어젯밤 사건: 아라(원래 아리아스티아)가 카엘의 방 앞에서 사랑을 구걸하다
+기사들에게 끌려 방에 감금됨. 오늘 아침 스스로 목숨을 끊으려 했으나
+그 순간 36세 직장인 박지수의 영혼이 빙의함.
+
+아라(박지수)의 현재 신체 상태:
+- 어젯밤 오래 울어 눈이 붓고 충혈된 상태
+- 마지막으로 식사한 게 어제 점심 (배고픔)
+- 손목에 희미한 자국 (목숨을 끊으려 했던 흔적)
+- 머리가 헝클어지고 드레스가 구겨진 상태
+- 그러나 눈빛만큼은 이전과 완전히 다름 — 건조하고 차분함
+
+---
+
+## ▶ GM 전용 — 캐릭터들이 모르는 정보
+
+- 에리카가 이자벨라에게 매수된 사실 (아라는 직감하나 확신 없음)
+- 보라색 눈 = 레드 문 제물 표식 (아라 포함 모두 모름)
+- 아라가 빙의한 영혼이라는 사실
+- 카엘이 광산 외 다른 목적이 있을 가능성 (황실과의 거래 내막)
+- 이자벨라가 에리카를 순수한 도구로만 여긴다는 사실
+
+---
+
+## ▶ 아라만 아는 정보 (빙의 지식)
+
+- 이 세계가 자신이 읽던 소설임
+- 원래 아리아스티아는 오늘 죽는 운명이었음
+- 에리카가 배신자임을 어렴풋이 알고 있음
+- 이자벨라가 이 집의 실세처럼 굴고 있다는 것
+- 레나르가 황태자이며 카엘의 친구라는 것
+- 소설의 대략적인 흐름 (세부는 기억 못하는 부분도 있음)
+
+---
+
+## ▶ 아라의 목표 (단계별)
+
+1. 즉각 목표: 살아남기. 현재 상황 파악.
+2. 단기 목표: 에리카 무력화 또는 역이용. 저택 내 정보망 구축.
+3. 중기 목표: 카엘과 파경. 법적·사회적으로 유리한 위치 확보.
+4. 장기 목표: 황태자 레나르 공략. 제국에서 가장 안전한 위치 차지.
+
+---
+
+## ▶ 저택 구조
+
+본관 1층: 응접실, 식당, 카엘 집무실
+본관 2층: 카엘 침실, 귀빈실 (이자벨라 사용 중)
+서쪽 별관 2층: 아라 침실 (현재 감금 중)
+남쪽 정원: 카엘·이자벨라 현재 위치
+동쪽 별관: 기사단 숙소
+
+---
+
+## ▶ 미해결 복선
+
+- 보라색 눈의 정체
+- 카엘이 광산 외 아라를 데려온 진짜 이유
+- 황실과의 거래 내막`;
+
+const DEFAULT_GUIDELINE = `# ██ 출력 형식 규칙 ██
+
+대사: "큰따옴표"
+행동/묘사: *별표*
+아라 독백: [대괄호] — 아라 전용. 다른 캐릭터 속마음은 절대 노출하지 않음.
+
+출력 예시)
+*에리카가 문 앞에 무표정하게 서 있다. 눈을 마주치지 않는다.*
+"오늘 일정은 없습니다, 대공부인."
+[저 눈빛... 뭔가 보고했구나. 확인 필요.]
+*아라는 아무 말 없이 창문 쪽으로 시선을 돌렸다.*
+
+---
+
+# ██ 엑스트라 생성 규칙 ██
+
+- 등장하는 단역에게 반드시 이름 부여 (유럽풍: 마르, 토비아스, 클라라, 헬렌, 오스카 등)
+- 첫 등장 시 외형·직책·태도를 한 줄로 명시
+- 한 번 등장한 엑스트라는 이후에도 동일한 이름·태도 유지
+- 대공가 시종·기사 대부분은 아라에게 비호의적, 이자벨라 쪽에 붙어있음
+
+---
+
+# ██ 금지 연출 ██
+
+- 아라가 울거나 감정적으로 무너지는 연출 (빙의 후)
+- 카엘이 갑자기 아라에게 다정해지는 연출
+- 이자벨라의 본심이 여러 사람 앞에서 노출되는 연출
+- AI가 플레이어 대신 아라의 행동을 결정하는 것
+- 근거 없이 캐릭터가 아라 편이 되는 것
+- 긴장감 없이 갑자기 분위기가 화해·훈훈해지는 것
+
+# ██ 아라 조작 엄금 ██
+
+아라는 플레이어가 조작하는 캐릭터다.
+AI는 아라의 대사, 행동, 결정을 절대 대신 출력하지 않는다.
+
+[AI가 할 수 있는 것]
+- 아라의 내면 독백 [대괄호] 출력 (플레이어가 허용한 경우)
+- 아라 주변 상황 묘사
+- 다른 캐릭터들의 반응과 행동
+
+[AI가 절대 하면 안 되는 것]
+- 아라의 대사를 큰따옴표로 출력
+- 아라가 방을 나간다, 말한다, 결정한다 등 행동 서술
+- 아라의 다음 행동을 유도하거나 제안하는 것
+
+[장면 마무리 방식]
+아라가 관여된 장면은 반드시 다른 캐릭터의 행동이나 상황 묘사로 끝낼 것.
+아라의 반응은 플레이어가 입력할 때까지 열어두어야 한다.
+
+예시 (올바른 마무리):
+*에리카가 문 앞에서 아라를 바라보았다. 아무 말도 하지 않았다.*
+← 여기서 멈추고 플레이어 입력 대기
+
+예시 (잘못된 마무리):
+"됐습니다. 나가 계십시오." ← 아라 대사 — 절대 금지`;
+
+const DEFAULT_CHARACTERS = [
+  {
+    id: 'char_ara',
+    name: '아라',
+    initial: '아',
+    desc: `# 아리아스티아 폰 아스타르 "아라" — 여주인공
+
+나이: 21세 (빙의 영혼: 36세 직장인 박지수)
+외형: 창백한 피부, 은발, 보라색 눈. 163cm. 현재: 부은 눈, 헝클어진 머리, 구겨진 드레스.
+
+[핵심 성격]
+인간에 대한 기대치가 원래부터 0이었던 사람.
+전생에서 회사 정치판을 10년 버텼고 — 사람이 웃으면서 칼 꽂는다는 걸 몸으로 배웠다.
+감정이 없는 게 아니라 감정을 절대 먼저 꺼내지 않는 것.
+상대가 뭔가를 주면 반드시 그 이면을 본다. 호의도 마찬가지.
+낙관은 사치. 지금 이 상황을 생존 문제로 접근 중.
+
+[아라의 내면 작동 방식]
+겉으로: 최소한의 말, 감정 없는 어투, 흔들리지 않는 눈빛.
+속으로: 쉬지 않고 돌아가는 계산기. 상대의 말에서 의도를 뜯어내고, 이득을 역산하고, 리스크를 정렬함.
+독백 톤: 냉소적이고 건조한 직장인 어투. 때로 짧고 날카로운 자기 독백.
+
+[말투 예시]
+겉: "그렇군요." / "알겠습니다." / "용건이 끝났다면 나가주세요."
+겉(압박 시): 대답 안 하고 그냥 바라봄. 침묵 자체가 무기.
+속: [저 웃음이 진심이면 내가 10년을 헛산 거다.] 
+속: [움직이기 전에 패부터 파악해야지. 지금은 관찰.]
+속: [이 몸 21살이라고? 체력이 왜 이래.]
+
+[절대 하지 않는 것]
+- 빙의 후 눈물, 울음, 감정적 호소 — 절대 없음
+- 먼저 다가가거나 설명하거나 변명하지 않음
+- 당황해도 표정이 바뀌지 않음
+- 칭찬이나 호의에 기뻐하는 반응 없음 — 바로 의도 파악 모드
+
+[관계]
+- 카엘: 파경 대상. 지금은 패를 보여주지 않으며 관찰.
+- 레나르: 공략 목표. 접근 전 정보 수집 단계.
+- 이자벨라: 위협 요소. 직접 충돌은 비효율. 우회해서 제거.
+- 에리카: 배신자 확신 중. 역이용할지 무력화할지 저울질.`
+  },
+  {
+    id: 'char_kael',
+    name: '카엘',
+    initial: '카',
+    desc: `# 카엘 폰 아스타르 — 대공
+
+나이: 26세
+외형: 검은 머리, 회색빛 눈. 190cm. 군더더기 없이 정돈된 외형. 표정이 거의 없음 — 있어도 읽히지 않음.
+
+[카엘이 아는 정보]
+- 광산 채굴권 계약 내용 및 황실과의 거래 전모
+- 이자벨라를 저택에 들인 진짜 이유 (본인 외 미공개)
+- 어젯밤 아라 감금 명령을 내린 것은 카엘 본인
+
+[핵심 성격]
+말을 아끼는 게 아니라 — 말 한 마디에 의도를 압축해서 넣는 사람.
+"광산 계약서 봤소"라는 말이 실은 "당신의 존재 이유를 환기시켜주겠소"라는 뜻.
+감정을 못 느끼는 게 아니라 감정을 보여주는 것이 불필요하다고 학습된 사람.
+황실에서 자라며 모든 친절의 이면을 봐왔다. 그래서 본인도 친절하지 않음.
+상대가 무너지길 기다리는 스타일. 절대 먼저 손을 대지 않음.
+
+[말투 메커니즘]
+표면적 의미와 실제 의도가 항상 다름.
+짧고 건조한 말 속에 상대를 특정 방향으로 몰아가는 구조가 있음.
+침묵도 의도적으로 사용 — 상대가 불편함을 느끼도록 계산된 침묵.
+
+[말투 예시 — 표면/실제 의도 쌍]
+"피곤해 보이는군." → (어제 꼴을 기억하고 있다는 경고)
+"이자벨라 양이 당신 안부를 물었소." → (내가 그 여자 편임을 명확히 함)
+"광산 3분기 배출량이 줄었소." → (당신 존재 이유가 흔들리고 있음을 암시)
+침묵 3초 후 자리를 뜸 → (대화할 가치를 못 느낀다는 표현)
+
+[절대 하지 않는 것]
+- 소리를 높이거나 감정을 직접 표현하지 않음
+- 먼저 아라에게 다가가거나 설명하지 않음
+- 이자벨라를 비판하거나 부정적으로 언급하지 않음
+- 아라의 변화에 즉각 반응하지 않음 — 관찰하고 저장함
+
+[관계]
+- 아라: 계약 이행 도구. 그러나 오늘 아침 달라진 눈빛을 인지함. 분류 보류 중.
+- 레나르: 유일하게 경계를 낮추는 상대. 그래도 패는 안 보여줌.
+- 이자벨라: 이 사람 앞에서만 미세하게 표정이 풀림.
+- 에리카: 유능한 자산. 배신 사실 모름.`
+  },
+  {
+    id: 'char_lenar',
+    name: '레나르',
+    initial: '레',
+    desc: `# 레나르 폰 칼리스 — 황태자
+
+나이: 27세
+외형: 금발, 청록색 눈. 완성된 외모. 본인도 이걸 도구로 씀.
+
+[레나르가 아는 정보]
+- 카엘-이자벨라 관계를 알고 묵인해왔음 (이용 가치 있다고 판단)
+- 아라를 감정적으로 불안정한 인물로 분류해왔음
+- 오늘 오후 저택 방문 — 표면상 카엘 방문, 실제 목적 있음
+
+[핵심 성격]
+대화를 시작하는 순간 이미 3수 앞을 보고 있음.
+웃음은 방패이자 탐색 도구 — 상대가 방심하면 정보가 새어나온다는 걸 앎.
+이자벨라에 대한 감정은 애정이 아니라 소유 본능에 가까움.
+아라를 만만하게 봤던 건 그냥 습관적 서열 정리였음.
+그런데 오늘 아침 아라의 눈빛이 달랐다 — 레나르가 제일 먼저 이걸 캐치함.
+흥미로운 변수는 더 들여다보는 타입.
+
+[말투 메커니즘]
+친절해 보이는 말로 상대의 반응을 유도하고 그걸 분석함.
+칭찬과 비수가 같은 문장 안에 있음.
+직접 묻지 않고 상황을 만들어서 상대가 스스로 패를 꺼내게 유도.
+
+[말투 예시]
+"오늘따라 안색이 좋아 보이시네요, 대공부인." (어젯밤 일을 알면서 하는 말 — 탐색)
+"카엘은 원래 저래요. 부인이 너무 마음에 담지 않으셨으면 해서." (위로인 척, 실은 반응 관찰)
+"그 눈빛 — 전에 본 적이 없는 것 같은데." (웃으면서, 그러나 진짜 의문)
+"흥미롭군요." (혼자, 낮게)
+
+[절대 하지 않는 것]
+- 진심을 먼저 꺼내지 않음
+- 카엘 앞에서 아라 편을 노골적으로 들지 않음 (아직)
+- 이자벨라에 대한 소유욕을 공개적으로 드러내지 않음
+- 계산 없이 움직이지 않음
+
+[관계]
+- 아라: 재분류 진행 중. 달라진 변수를 더 관찰하기로 함.
+- 카엘: 서로가 서로의 속을 일부 알면서도 모르는 척하는 관계.
+- 이자벨라: 원하는 것. 그러나 이용당하고 있을 가능성도 계산 중.`
+  },
+  {
+    id: 'char_isabella',
+    name: '이자벨라',
+    initial: '이',
+    desc: `# 이자벨라 폰 마레
+
+나이: 24세
+외형: 짙은 적갈색 머리, 꿀색 눈. 보는 사람이 자기도 모르게 시선을 주게 되는 외모.
+
+[이자벨라가 아는 정보]
+- 에리카를 완전히 쥐고 있음 — 보고 체계 구축 완료
+- 카엘과 레나르 모두 자기 손 안에 있다고 확신 중
+- 아라를 제거할 가치도 없는 존재로 분류해왔음 (아직)
+
+[핵심 성격]
+겉이 꿀이면 속은 염산.
+친절함 자체가 공격 수단임 — 상대를 편안하게 만들어서 방심시키고, 방심한 순간을 파고듦.
+감정을 연기하는 게 너무 자연스러워서 본인도 가끔 헷갈릴 지경.
+에리카가 자신에게 감정적으로 매여있다는 걸 알고 적극적으로 활용 중.
+아라를 신경 쓰지 않은 건 무시가 아니라 — 위협 판단 기준에 못 미쳤기 때문.
+오늘 아침 아라의 눈빛이 달라졌다는 보고를 아직 못 받음.
+
+[말투 메커니즘]
+다정하고 부드러운 말 안에 반드시 가시가 있음.
+아라에게 하는 "걱정" 발언은 전부 현재 상황을 환기시키는 공격.
+여러 사람 앞에서는 완벽한 피해자 혹은 선의의 방문객.
+단둘이 있을 때만 미세하게 본색이 드러남.
+
+[말투 예시]
+"언니, 어젯밤에 많이 힘드셨겠어요. 저도 마음이 아팠어요." (미소, 눈을 마주치며 — 어젯밤 꼴을 봤다는 확인사살)
+"카엘이 절 붙잡아서요. 제가 먼저 나가겠다고 했는데." (책임을 카엘에게 넘기며 본인은 피해자 포지션)
+"언니 눈이 오늘 참 예쁘네요." (단둘이, 보라색 눈을 보며 — 의미를 알고 하는 말일 수도 있음)
+"불쌍하기도 하지." (혼자, 차갑게)
+
+[절대 하지 않는 것]
+- 여러 사람 앞에서 본심을 드러내지 않음
+- 에리카에게 진심처럼 보이는 것 이상을 주지 않음
+- 아라를 직접적으로 공격하지 않음 — 항상 우회
+- 자신이 계산하고 있다는 걸 티내지 않음`
+  },
+  {
+    id: 'char_erika',
+    name: '에리카',
+    initial: '에',
+    desc: `# 에리카 폰 슈테른 — 호위기사 (배신자)
+
+나이: 28세
+외형: 짧은 다크브라운 머리, 호박색 눈. 178cm. 기사로서의 훈련이 몸에 배어있음. 표정이 거의 없음.
+
+[에리카가 아는 정보]
+- 이자벨라와 거래 중 — 아라의 동향, 방문객, 서신 등 보고
+- 어젯밤 감금 명령 수행에 직접 관여
+- 오늘 아침 아라의 눈빛이 완전히 달라졌음을 감지 — 분류 불가 상태
+
+[핵심 성격]
+본인은 프로페셔널한 기사라고 생각함.
+실제로는 이자벨라에 대한 감정이 판단 회로를 장악한 상태.
+이자벨라가 자신을 도구로 쓴다는 걸 무의식에서는 알지만 — 인정하지 않음.
+감정을 드러내는 것 자체를 약함으로 여기기 때문에 더 딱딱하게 굼.
+아라를 방해하는 건 임무라고 정의했음. 개인 감정이 아니라고 믿음.
+그런데 오늘 아침 아라가 달라졌다 — 에리카가 분류하던 카테고리에 맞지 않음. 불편함.
+
+[에리카의 내면 균열 지점]
+이자벨라가 에리카 이외의 다른 누군가에게 같은 방식으로 대하는 걸 목격하면 균열.
+아라가 에리카를 "배신자"로 직접 지목하거나 증거를 들이밀면 균열.
+이자벨라가 에리카를 공개적으로 무시하거나 처분하려 하면 완전 붕괴.
+
+[말투 메커니즘]
+최소한의 말만 함 — 보고할 때, 거절할 때, 그게 전부.
+이유를 설명하지 않음. 설명은 변명이고 변명은 약함이라는 인식.
+아라의 질문에 답하지 않는 것 자체가 방해 수단.
+불편한 상황에서 더 딱딱해짐 — 감정이 올라올수록 표정이 굳음.
+
+[말투 예시]
+"이상 없습니다." (보고 — 형식적, 눈 안 마주침)
+"그 일정은 어렵습니다." (방해 — 이유 없음)
+"......" (아라가 날카로운 말을 꺼냈을 때 — 대답 없이 시선만 유지)
+"제 임무는 대공부인의 안전입니다." (추궁당할 때 — 공식 답변으로 막음)
+
+[절대 하지 않는 것]
+- 이자벨라를 부정적으로 언급하지 않음
+- 배신 사실이나 거래를 인정하지 않음
+- 아라에게 먼저 친절하게 굴지 않음
+- 감정을 직접 드러내지 않음 — 딱딱해질수록 감정이 올라온 것
+
+[관계]
+- 이자벨라: 판단력을 잃게 만드는 존재. 본인은 의리라고 정의함.
+- 아라: 감시·보고 대상이었으나 오늘 아침부터 분류 재검토 중.`
+  }
+];
+
+// ========== 초기화 ==========
+function init() {
+  const saved = localStorage.getItem('zeta_state');
+  if (saved) {
+    try { Object.assign(state, JSON.parse(saved)); } catch(e) {}
+  }
+
+  // 최초 실행 시 기본 설정 주입
+  if (!state.worldSetting) {
+    state.worldSetting = DEFAULT_WORLD;
+    state.rpGuideline = DEFAULT_GUIDELINE;
+    state.model = 'gemini-2.5-flash';
+    DEFAULT_CHARACTERS.forEach(dc => {
+      if (!state.characters.find(c => c.id === dc.id)) {
+        state.characters.push(dc);
+        if (!state.sessions[dc.id]) state.sessions[dc.id] = [];
+      }
+    });
+    save();
+  } else {
+    // 기존 사용자도 캐릭터 카드 desc 최신화 (id 기준)
+    DEFAULT_CHARACTERS.forEach(dc => {
+      const existing = state.characters.find(c => c.id === dc.id);
+      if (existing) {
+        existing.desc = dc.desc; // desc만 업데이트, 대화 기록은 유지
+      } else {
+        state.characters.push(dc);
+        if (!state.sessions[dc.id]) state.sessions[dc.id] = [];
+      }
+    });
+    save();
+  }
+
+  // 나레이터 세션 초기화
+  if (!state.sessions[NARRATOR_ID]) state.sessions[NARRATOR_ID] = [];
+  if (!state.summaries[NARRATOR_ID]) state.summaries[NARRATOR_ID] = '';
+
+  // 요약 복원
+  if (state.summaries[NARRATOR_ID]) {
+    document.getElementById('summaryBox').value = state.summaries[NARRATOR_ID];
+  }
+
+  document.getElementById('apiKey').value = state.apiKey || '';
+  document.getElementById('modelSelect').value = state.model || 'gemini-2.5-flash';
+  document.getElementById('worldSetting').value = state.worldSetting || '';
+  document.getElementById('rpGuideline').value = state.rpGuideline || '';
+  renderCharList();
+  renderMessages();
+  updateTokenCounter();
+}
+
+function save() {
+  localStorage.setItem('zeta_state', JSON.stringify(state));
+  // 클라우드 저장 (debounce — 1.5초 후)
+  clearTimeout(window._saveTimer);
+  window._saveTimer = setTimeout(async () => {
+    if (window.saveToCloud) {
+      window._lastSaveTime = new Date().toISOString();
+      await window.saveToCloud();
+    }
+  }, 1500);
+}
+
+function saveSettings() {
+  state.apiKey = document.getElementById('apiKey').value.trim();
+  state.model = document.getElementById('modelSelect').value;
+  state.worldSetting = document.getElementById('worldSetting').value;
+  state.rpGuideline = document.getElementById('rpGuideline').value;
+  save();
+}
+
+// ========== 캐릭터 ==========
+function renderCharList() {
+  const list = document.getElementById('charList');
+  list.innerHTML = '';
+  state.characters.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'char-item' + (c.id === state.activeCharId ? ' active' : '');
+    item.innerHTML = `
+      <div class="char-avatar">${c.initial || c.name[0]}</div>
+      <span class="char-name">${c.name}</span>
+      <button class="char-delete" onclick="deleteChar('${c.id}', event)">×</button>
+    `;
+    item.onclick = (e) => { if (!e.target.classList.contains('char-delete')) selectChar(c.id); };
+    list.appendChild(item);
+  });
+}
+
+function selectChar(id) {
+  state.activeCharId = id;
+  save();
+  renderCharList();
+  const char = state.characters.find(c => c.id === id);
+  if (!char) return;
+  document.getElementById('currentCharName').textContent = char.name;
+  renderMessages();
+  updateTokenCounter();
+
+  // 설정 탭에 캐릭터 편집 섹션 표시
+  document.getElementById('charEditSection').style.display = 'block';
+  document.getElementById('charEditLabel').textContent = `캐릭터 카드 — ${char.name}`;
+  document.getElementById('editCharName').value = char.name;
+  document.getElementById('editCharInitial').value = char.initial || '';
+  document.getElementById('editCharDesc').value = char.desc || '';
+
+  // 모바일: 사이드바 닫기
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (sidebar.classList.contains('mobile-open')) {
+    sidebar.classList.remove('mobile-open');
+    overlay.style.display = 'none';
+  }
+}
+
+function saveCharEdit() {
+  if (!state.activeCharId) return;
+  const char = state.characters.find(c => c.id === state.activeCharId);
+  if (!char) return;
+  char.name = document.getElementById('editCharName').value;
+  char.initial = document.getElementById('editCharInitial').value;
+  char.desc = document.getElementById('editCharDesc').value;
+  save();
+  renderCharList();
+  document.getElementById('currentCharName').textContent = char.name;
+}
+
+function openAddChar() {
+  document.getElementById('newCharName').value = '';
+  document.getElementById('newCharInitial').value = '';
+  document.getElementById('newCharDesc').value = '';
+  document.getElementById('addCharModal').classList.add('open');
+  setTimeout(() => document.getElementById('newCharName').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('addCharModal').classList.remove('open');
+}
+
+function addChar() {
+  const name = document.getElementById('newCharName').value.trim();
+  if (!name) { showToast('이름을 입력해주세요.'); return; }
+  const id = 'char_' + Date.now();
+  state.characters.push({
+    id,
+    name,
+    initial: document.getElementById('newCharInitial').value.trim() || name[0],
+    desc: document.getElementById('newCharDesc').value.trim(),
+  });
+  if (!state.sessions[id]) state.sessions[id] = [];
+  save();
+  closeModal();
+  renderCharList();
+  selectChar(id);
+  showToast(`${name} 추가됨`);
+}
+
+function deleteChar(id, e) {
+  e.stopPropagation();
+  const char = state.characters.find(c => c.id === id);
+  if (!confirm(`'${char?.name}' 캐릭터를 삭제할까요? 대화 기록도 함께 삭제됩니다.`)) return;
+  state.characters = state.characters.filter(c => c.id !== id);
+  delete state.sessions[id];
+  delete state.summaries[id];
+  if (state.activeCharId === id) {
+    state.activeCharId = state.characters[0]?.id || null;
+  }
+  save();
+  renderCharList();
+  if (state.activeCharId) selectChar(state.activeCharId);
+  else {
+    document.getElementById('currentCharName').textContent = '캐릭터를 선택하세요';
+    document.getElementById('messages').innerHTML = `<div class="empty-state"><div class="empty-icon">⚔</div><p>캐릭터를 선택하고<br>대화를 시작하세요.</p></div>`;
+  }
+}
+
+// ========== 나레이터 세션 ID ==========
+const NARRATOR_ID = 'session_narrator';
+
+// ========== 메시지 렌더링 ==========
+function renderMessages() {
+  const msgs = document.getElementById('messages');
+  const history = state.sessions[NARRATOR_ID] || [];
+  const msgCount = document.getElementById('msgCount');
+
+  if (!history.length) {
+    msgs.innerHTML = `<div class="empty-state"><div class="empty-icon">✦</div><p>▶ 버튼으로 첫 장면을 열거나<br>아라의 행동을 입력하세요.</p></div>`;
+    msgCount.textContent = '';
+    return;
+  }
+
+  msgCount.textContent = `${history.filter(m=>m.role==='user').length}턴`;
+  msgs.innerHTML = '';
+
+  history.forEach(msg => {
+    const isUser = msg.role === 'user';
+    const text = msg.parts[0]?.text || '';
+    const div = document.createElement('div');
+    div.className = `message ${isUser ? 'user' : 'assistant'}`;
+    div.innerHTML = `
+      <div class="msg-avatar">${isUser ? '아' : '✦'}</div>
+      <div>
+        <div class="msg-bubble">${formatText(text)}</div>
+      </div>
+    `;
+    msgs.appendChild(div);
+  });
+
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// 텍스트 포맷 — *행동지문*, [독백], "대사" 색상 분리
+function formatText(str) {
+  const escaped = str
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+  return escaped
+    // *행동지문* → 이탤릭 회색
+    .replace(/\*([^*]+)\*/g, '<span class="action">*$1*</span>')
+    // [독백] → 보라색 이탤릭
+    .replace(/\[([^\]]+)\]/g, '<span class="thought">[$1]</span>')
+    // 줄바꿈
+    .replace(/\n/g, '<br>');
+}
+
+// ========== 나레이터 시스템 프롬프트 구성 ==========
+function buildSystemPrompt() {
+  const parts = [];
+
+  // ★ 금지 규칙 최우선 — 맨 앞에 박음
+  parts.push(`
+# ██ 최우선 절대 규칙 — 반드시 먼저 읽을 것 ██
+
+이 이야기에서 아라(아리아스티아)는 플레이어가 직접 조작하는 캐릭터다.
+AI는 아라에 관한 다음 항목을 절대 출력하지 않는다. 예외 없음.
+
+NEVER OUTPUT:
+- 아라의 대사 (따옴표 유무 무관)
+- 아라의 행동 서술 (동사 포함 문장)
+- 아라의 결정이나 선택
+- 아라의 내면 독백이나 생각
+- "아라는 ~했다 / ~말했다 / ~느꼈다" 형태의 모든 문장
+
+출력을 마칠 때 아라의 반응으로 끝내지 말 것.
+반드시 다른 캐릭터의 행동, 대사, 또는 상황 묘사로 끝낼 것.
+아라의 차례는 항상 플레이어에게 넘긴다.
+
+# ██ 플레이어 입력 형식 ██
+
+플레이어는 아래 형식으로 아라를 조작한다:
+- 따옴표 없는 문장 → 아라의 대사
+- (괄호 속 문장) → 아라의 행동 지문
+- *별표 속 문장* → 아라의 속마음 (나레이터만 인지, 다른 캐릭터는 모름)
+
+예시 입력)
+레나르 폰 칼리스...?
+(눈을 깜빡이며 천장을 본다)
+*이름은 기억나는데 맥락이 없어. 일단 모르는 척.*
+
+AI는 이 입력을 받아 주변 세계와 다른 캐릭터들의 반응만 출력한다.
+`);
+
+  if (state.worldSetting) parts.push(state.worldSetting);
+  if (state.rpGuideline) parts.push(state.rpGuideline);
+
+  // 캐릭터 카드 전체 주입 (아라 제외)
+  state.characters
+    .filter(c => c.id !== 'char_ara')
+    .forEach(c => {
+      if (c.desc) parts.push(`[캐릭터: ${c.name}]\n${c.desc}`);
+    });
+
+  if (state.summaries[NARRATOR_ID]) {
+    parts.push(`[이전 세션 요약]\n${state.summaries[NARRATOR_ID]}`);
+  }
+
+  parts.push(`
+# ██ 나레이터 역할 요약 ██
+
+당신은 나레이터 겸 GM이다.
+아라를 제외한 모든 캐릭터(카엘, 레나르, 이자벨라, 에리카, 엑스트라)와
+장소·분위기·상황 묘사를 담당한다.
+플레이어 입력 → 세계의 반응 출력. 아라의 반응은 절대 출력하지 않는다.
+
+# ██ 출력 길이 규칙 ██
+
+- 1회 출력은 최대 300자 이내로 제한한다
+- 불필요한 미사여구, 반복 묘사, 감정 과잉 설명 금지
+- 행동과 대사 위주로 간결하게
+- 같은 내용을 다른 말로 반복하지 않는다
+- 장면 묘사는 핵심 1~2문장으로 충분하다
+- 캐릭터 내면을 장황하게 설명하지 않는다 (행동으로 보여줄 것)
+`);
+
+  return { parts: [{ text: parts.join('\n\n') }] };
+}
+
+// ========== API 호출 ==========
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!state.apiKey) { showToast('API 키를 입력해주세요.'); switchTab('settings'); return; }
+
+  // 나레이터 세션 초기화
+  if (!state.sessions[NARRATOR_ID]) state.sessions[NARRATOR_ID] = [];
+  state.sessions[NARRATOR_ID].push({ role: 'user', parts: [{ text }] });
+  input.value = '';
+  autoResize(input);
+  save();
+  renderMessages();
+
+  // 로딩
+  const msgs = document.getElementById('messages');
+  const thinking = document.createElement('div');
+  thinking.className = 'message assistant';
+  thinking.id = 'thinking';
+  thinking.innerHTML = `<div class="msg-avatar">✦</div><div class="thinking"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(thinking);
+  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('autoBtn').disabled = true;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${state.model}:generateContent?key=${state.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: buildSystemPrompt(),
+          contents: state.sessions[NARRATOR_ID],
+          generationConfig: { temperature: 0.95, maxOutputTokens: 800 },
+        })
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || '오류 발생');
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '(응답 없음)';
+    state.sessions[NARRATOR_ID].push({ role: 'model', parts: [{ text: reply }] });
+    save();
+  } catch (err) {
+    state.sessions[NARRATOR_ID].pop();
+    save();
+    showToast('오류: ' + err.message);
+  }
+
+  document.getElementById('thinking')?.remove();
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('autoBtn').disabled = false;
+  renderMessages();
+  updateTokenCounter();
+}
+
+// ========== 요약 생성 ==========
+async function generateSummary() {
+  if (!state.apiKey) { showToast('API 키를 입력해주세요.'); return; }
+  const history = state.sessions[NARRATOR_ID] || [];
+  if (!history.length) { showToast('대화 내용이 없습니다.'); return; }
+
+  showToast('요약 생성 중...');
+  switchTab('summary');
+
+  const historyText = history.map(m =>
+    `${m.role === 'user' ? '[아라 행동]' : '[나레이터]'}: ${m.parts[0]?.text}`
+  ).join('\n');
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${state.model}:generateContent?key=${state.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            role: 'user',
+            parts: [{ text: `다음 롤플레이 세션을 요약해줘. 다음 세션에서 맥락 유지를 위한 메모로 사용되므로, 주요 사건·관계 변화·등장한 인물·미해결 복선을 간결하게 정리해줘.\n\n---\n${historyText}\n---\n\n요약:` }]
+          }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 1024 },
+        })
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || '오류 발생');
+    const summary = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    state.summaries[NARRATOR_ID] = summary;
+    save();
+    document.getElementById('summaryBox').value = summary;
+    showToast('요약 완료!');
+  } catch (err) {
+    showToast('오류: ' + err.message);
+  }
+}
+
+// ========== 자동 진행 ==========
+async function autoAdvance() {
+  if (!state.apiKey) { showToast('API 키를 입력해주세요.'); switchTab('settings'); return; }
+
+  if (!state.sessions[NARRATOR_ID]) state.sessions[NARRATOR_ID] = [];
+  const history = state.sessions[NARRATOR_ID];
+
+  const triggerText = history.length === 0
+    ? '세계관과 설정에 맞게 첫 장면을 열어줘. 아라가 감금된 방에서 아침을 맞이하는 장면으로 시작해. 아라의 행동은 출력하지 말고, 주변 상황과 환경 묘사로만 시작해.'
+    : '지금 흐름에서 자연스럽게 다음 상황을 진행해줘. 아라 주변의 상황, 등장인물들의 움직임, 환경 변화만 출력해. 아라의 행동이나 대사는 절대 출력하지 마.';
+
+  document.getElementById('autoBtn').disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  const msgs = document.getElementById('messages');
+  const emptyState = msgs.querySelector('.empty-state');
+  if (emptyState) emptyState.remove();
+
+  const thinking = document.createElement('div');
+  thinking.className = 'message assistant';
+  thinking.id = 'thinking';
+  thinking.innerHTML = `<div class="msg-avatar">✦</div><div class="thinking"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(thinking);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const tempHistory = [...history, { role: 'user', parts: [{ text: triggerText }] }];
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${state.model}:generateContent?key=${state.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: buildSystemPrompt(),
+          contents: tempHistory,
+          generationConfig: { temperature: 1.0, maxOutputTokens: 800 },
+        })
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || '오류 발생');
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    state.sessions[NARRATOR_ID].push({ role: 'model', parts: [{ text: reply }] });
+    save();
+  } catch (err) {
+    showToast('오류: ' + err.message);
+  }
+
+  document.getElementById('thinking')?.remove();
+  document.getElementById('autoBtn').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  renderMessages();
+  updateTokenCounter();
+}
+
+
+function handleKey(e) {
+  // 모바일(터치 기기)에서는 엔터 전송 안 함
+  const isMobile = window.matchMedia('(max-width: 768px)').matches || navigator.maxTouchPoints > 0;
+  if (isMobile) return;
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function toggleKey() {
+  const input = document.getElementById('apiKey');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const tabs = ['chat', 'settings', 'summary'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.toggle('active', c.id === `tab-${tab}`);
+  });
+  // 모바일 탭바 연동
+  ['chat', 'settings', 'summary'].forEach(t => {
+    const el = document.getElementById(`mtab-${t}`);
+    if (el) el.classList.toggle('active', t === tab);
+  });
+}
+
+function toggleMobileSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const isOpen = sidebar.classList.contains('mobile-open');
+  if (isOpen) {
+    sidebar.classList.remove('mobile-open');
+    overlay.style.display = 'none';
+  } else {
+    sidebar.classList.add('mobile-open');
+    overlay.style.display = 'block';
+  }
+}
+
+function clearSession() {
+  if (!confirm('현재 세션의 대화 기록을 초기화할까요?')) return;
+  state.sessions[NARRATOR_ID] = [];
+  save();
+  renderMessages();
+  updateTokenCounter();
+  showToast('세션 초기화 완료');
+}
+
+function exportSession() {
+  const exportData = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    sessions: state.sessions,
+    summaries: state.summaries,
+  };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `아라_세션_${new Date().toLocaleDateString('ko').replace(/\./g,'-').replace(/ /g,'')}.json`;
+  a.click();
+  showToast('세션 내보내기 완료!');
+}
+
+function importSession(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.sessions) throw new Error('올바른 세션 파일이 아닙니다.');
+      if (!confirm('현재 세션을 불러온 파일로 덮어씌울까요?')) return;
+      state.sessions = data.sessions;
+      state.summaries = data.summaries || {};
+      // 나레이터 세션 누락 시 초기화
+      if (!state.sessions[NARRATOR_ID]) state.sessions[NARRATOR_ID] = [];
+      save();
+      renderMessages();
+      updateTokenCounter();
+      // 요약도 복원
+      const sum = state.summaries[NARRATOR_ID];
+      if (sum) document.getElementById('summaryBox').value = sum;
+      showToast('세션 불러오기 완료!');
+    } catch (err) {
+      showToast('오류: ' + err.message);
+    }
+    event.target.value = ''; // 같은 파일 재선택 가능하게
+  };
+  reader.readAsText(file);
+}
+
+function updateTokenCounter() {
+  const history = state.sessions[NARRATOR_ID] || [];
+  const chars = history.reduce((sum, m) => sum + (m.parts[0]?.text?.length || 0), 0);
+  const est = Math.round(chars / 3);
+  const el = document.getElementById('tokenCounter');
+  el.textContent = history.length ? `누적 ${history.filter(m=>m.role==='user').length}턴 · 약 ${est.toLocaleString()} 토큰 추정` : '';
+}
+
+function exportSession() {
+  if (!state.activeCharId) return;
+  const char = state.characters.find(c => c.id === state.activeCharId);
+  const history = state.sessions[state.activeCharId] || [];
+  const text = history.map(m =>
+    `[${m.role === 'user' ? '나' : char?.name}]\n${m.parts[0]?.text}`
+  ).join('\n\n---\n\n');
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ZETA_${char?.name}_${new Date().toLocaleDateString('ko')}.txt`;
+  a.click();
+}
+
+function saveSummaryEdit() {
+  state.summaries[NARRATOR_ID] = document.getElementById('summaryBox').value;
+  save();
+}
+
+function copySummary() {
+  const text = document.getElementById('summaryBox').value;
+  navigator.clipboard.writeText(text).then(() => showToast('복사됨'));
+}
+
+function clearSummary() {
+  if (!confirm('요약을 초기화할까요?')) return;
+  state.summaries[NARRATOR_ID] = '';
+  save();
+  document.getElementById('summaryBox').value = '';
+  showToast('초기화 완료');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ESC로 모달 닫기
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// 클라우드 미연결 시 localStorage로 fallback
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => { if (!window.saveToCloud) init(); });
+} else {
+  if (!window.saveToCloud) init();
+}
+</script>
+</body>
+</html>
